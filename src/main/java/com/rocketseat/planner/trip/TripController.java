@@ -1,5 +1,13 @@
 package com.rocketseat.planner.trip;
 
+import com.rocketseat.planner.activity.ActivityData;
+import com.rocketseat.planner.activity.ActivityRequestPayload;
+import com.rocketseat.planner.activity.ActivityResponse;
+import com.rocketseat.planner.activity.ActivityService;
+import com.rocketseat.planner.link.LinkData;
+import com.rocketseat.planner.link.LinkRequestPayload;
+import com.rocketseat.planner.link.LinkResponse;
+import com.rocketseat.planner.link.LinkService;
 import com.rocketseat.planner.participant.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +28,16 @@ public class TripController {
 
     @Autowired
     private ParticipantService participantService;
+
+    @Autowired
+    private ActivityService activityService;
+
+    @Autowired
+    private LinkService linkService;
+
+
+    //  ENDPOINTS DE VIAGEM
+
 
     @PostMapping
     public ResponseEntity<TripCreateReponse> createTrip(@RequestBody TripRequestPayload payload){
@@ -74,6 +92,10 @@ public class TripController {
         return ResponseEntity.notFound().build();
     }
 
+
+    //  ENDPOINTS DE PARTICIPANTES
+
+
     @PostMapping("/{id}/invite")
     public ResponseEntity<ParticipantCreateResponse> inviteParticipant( @PathVariable UUID id ,@RequestBody ParticipantRequestPayload payload){
         Optional<Trip> trip = this.repository.findById(id);
@@ -96,6 +118,58 @@ public class TripController {
         List<ParticipantData> participantList = this.participantService.getAllParticipantsFromEvent(id);
 
         return ResponseEntity.ok(participantList);
+    }
+
+
+    //  ENDPOINTS DE ATIVIDADES
+
+
+    // criar atividade por viagem
+    @PostMapping("/{id}/activities")
+    public ResponseEntity<ActivityResponse> registerActivity( @PathVariable UUID id ,@RequestBody ActivityRequestPayload payload){
+        Optional<Trip> trip = this.repository.findById(id);
+
+        if(trip.isPresent()){
+            Trip rawTrip = trip.get();
+
+            ActivityResponse activityResponse = this.activityService.register(payload,rawTrip);
+
+            return ResponseEntity.ok(activityResponse);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    // listar atividade por viagem
+    @GetMapping("/{id}/activities")
+    public ResponseEntity<List<ActivityData>> getAllActivities(@PathVariable UUID id){
+        List<ActivityData> activityDataList = this.activityService.getAllActivityFromId(id);
+        return ResponseEntity.ok(activityDataList);
+    }
+
+
+    //  ENDPOINTS DE LINKS
+
+
+    @PostMapping("/{id}/links")
+    public ResponseEntity<LinkResponse> registerLink(@PathVariable UUID id , @RequestBody LinkRequestPayload payload){
+        Optional<Trip> trip = this.repository.findById(id);
+
+        if(trip.isPresent()){
+            Trip rawTrip = trip.get();
+
+            LinkResponse linkResponse = this.linkService.register(payload,rawTrip);
+
+            return ResponseEntity.ok(linkResponse);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/links")
+    public ResponseEntity<List<LinkData>> getAllLinks(@PathVariable UUID id){
+        List<LinkData> linkData = this.linkService.getAllLinkFromId(id);
+        return ResponseEntity.ok(linkData);
     }
 
 }
